@@ -1,0 +1,28 @@
+# Python / virtualenv
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+env/
+
+# Environment & secrets
+.env
+.env.*
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Testing / tooling
+.pytest_cache/
+.mypy_cache/
+coverage/
+htmlcov/
+
+# Logs
+*.log
+

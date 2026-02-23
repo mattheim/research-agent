@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 224 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 30% 12%;
+
+    --primary: 230 65% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 93%;
+    --secondary-foreground: 224 30% 12%;
+
+    --muted: 220 16% 93%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 16% 93%;
+    --accent-foreground: 224 30% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 90%;
+    --input: 220 16% 90%;
+    --ring: 230 65% 52%;
+
+    --radius: 0.5rem;
+
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 228 24% 14%;
+    --sidebar-foreground: 220 20% 85%;
+    --sidebar-primary: 230 65% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 20% 20%;
+    --sidebar-accent-foreground: 220 20% 90%;
+    --sidebar-border: 228 18% 22%;
+    --sidebar-ring: 230 65% 52%;
+  }
+
+  .dark {
+    --background: 228 24% 8%;
+    --foreground: 220 20% 92%;
+
+    --card: 228 22% 12%;
+    --card-foreground: 220 20% 92%;
+
+    --popover: 228 22% 12%;
+    --popover-foreground: 220 20% 92%;
+
+    --primary: 230 65% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 228 18% 18%;
+    --secondary-foreground: 220 20% 92%;
+
+    --muted: 228 18% 18%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 228 18% 18%;
+    --accent-foreground: 220 20% 92%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 228 18% 20%;
+    --input: 228 18% 20%;
+    --ring: 230 65% 62%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
+    --info: 200 80% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 228 26% 10%;
+    --sidebar-foreground: 220 20% 80%;
+    --sidebar-primary: 230 65% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 20% 16%;
+    --sidebar-accent-foreground: 220 20% 85%;
+    --sidebar-border: 228 18% 16%;
+    --sidebar-ring: 230 65% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}

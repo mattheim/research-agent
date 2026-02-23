@@ -1,0 +1,21 @@
+.DS_Store
+.vscode/
+.idea/
+
+# Secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Node / frontend build output
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# Python cache / envs
+**/__pycache__/
+**/.venv/
+**/venv/
+
+# Supabase local CLI state
+**/supabase/.temp/
