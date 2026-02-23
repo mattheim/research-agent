@@ -5,20 +5,21 @@ from .utils.safeparse import safe_parse_json
 from .utils.website_hint import infer_website_hint
 
 from .config import MODEL_NAME, create_async_llm_client
-from .models import PqlRecordIn, EnrichmentResult
+from .models import PqlRecordIn, ResearchResult
 from .supabase_client import insert_row, update_row, log_activity, get_single_row
+from .web_navigate import gather_subject_context_async
 
 client = create_async_llm_client()
 
-ENRICHMENT_SYSTEM_PROMPT = """
-You are a GTM research analyst enriching product-qualified leads.
+RESEARCH_SYSTEM_PROMPT = """
+You are a GTM research analyst researching product-qualified leads.
 
 Given basic account + contact context, infer structured information about the company
 and key contacts involved in the deal.
 
-You may receive a website_hint_url. Use it only as a hint for likely company context.
-Do NOT claim you visited, verified, or read any website content.
-If website_hint_url is missing, proceed from the provided lead context only.
+You may receive web_navigation context from lightweight web navigation tools.
+Use it as supporting evidence when available. If web_navigation is missing or sparse,
+proceed conservatively from the provided lead context.
 
 Respond ONLY in JSON with the following shape:
 {
@@ -43,9 +44,18 @@ Respond ONLY in JSON with the following shape:
 """
 
 
-async def run_enrichment(pql: PqlRecordIn, qualification_metadata: Dict[str, Any]) -> EnrichmentResult:
+async def run_research(
+    pql: PqlRecordIn,
+    research_metadata: Dict[str, Any] | None = None,
+) -> ResearchResult:
     raw = pql.raw_data or {}
     website_hint = infer_website_hint(pql.email, pql.company_name)
+
+    subject = pql.company_name or pql.email
+    web_navigation = await gather_subject_context_async(
+        subject=subject,
+        website_hint_url=website_hint.get("url"),
+    )
 
     context = {
         "id": pql.id,
@@ -55,14 +65,15 @@ async def run_enrichment(pql: PqlRecordIn, qualification_metadata: Dict[str, Any
         "website_hint_source": website_hint.get("source"),
         "product_usage_score": pql.product_usage_score,
         "last_active_date": pql.last_active_date,
-        "qualification": qualification_metadata,
+        "research": research_metadata or {},
         "raw_data": raw,
+        "web_navigation": web_navigation,
     }
 
     user_prompt = (
-        "Enrich this product-qualified lead with company and contact insights.\n\n"
-        "Use website_hint_url only as a probable homepage/domain cue. "
-        "Do not fabricate claims about page content.\n\n"
+        "Research this product-qualified lead with company and contact insights.\n\n"
+        "Prefer web_navigation evidence when it is present. "
+        "If evidence is weak, return conservative defaults.\n\n"
         f"Lead JSON:\n{json.dumps(context, ensure_ascii=False)}\n\n"
         "Return only the JSON object described in the instructions."
     )
@@ -70,7 +81,7 @@ async def run_enrichment(pql: PqlRecordIn, qualification_metadata: Dict[str, Any
     resp = await client.chat.completions.create(
         model=MODEL_NAME,
         messages=[
-            {"role": "system", "content": ENRICHMENT_SYSTEM_PROMPT},
+            {"role": "system", "content": RESEARCH_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
     )
@@ -86,14 +97,18 @@ async def run_enrichment(pql: PqlRecordIn, qualification_metadata: Dict[str, Any
     if not isinstance(key_contacts, list):
         key_contacts = []
 
+    has_web_sources = bool(web_navigation.get("sources"))
+    research_source = "openai_inferred_with_web_navigate" if has_web_sources else "openai_inferred"
+
+    # Keep the DB contract stable while we migrate naming to "research" in code.
     payload = {
         "pql_id": pql.id,
         "company_info": company_info,
         "key_contacts": key_contacts,
-        "enrichment_source": "openai_inferred",
+        "enrichment_source": research_source,
     }
 
-    # Upsert enrichment so we can safely re-run it without creating duplicates.
+    # Upsert into existing enrichments table to avoid schema changes right now.
     existing = get_single_row("enrichments", filters={"pql_id": pql.id})
     if existing:
         update_row("enrichments", existing["id"], payload)
@@ -102,13 +117,16 @@ async def run_enrichment(pql: PqlRecordIn, qualification_metadata: Dict[str, Any
 
     log_activity(
         pql.id,
-        "enriched",
-        {"company_info_keys": list(company_info.keys())},
+        "researched",
+        {
+            "company_info_keys": list(company_info.keys()),
+            "web_source_count": len(web_navigation.get("sources", [])),
+        },
     )
 
-    return EnrichmentResult(
+    return ResearchResult(
         pql_id=pql.id,
         company_info=company_info,
         key_contacts=key_contacts,
-        enrichment_source="openai_inferred",
+        research_source=research_source,
     )

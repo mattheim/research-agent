@@ -12,7 +12,6 @@ import {
   normalizeQualificationThreshold,
   setStoredQualificationThreshold,
 } from '@/lib/constants';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 interface ParsedRow {
@@ -28,7 +27,6 @@ export function CsvUploader() {
   const [singleEmail, setSingleEmail] = useState('');
   const [singleCompany, setSingleCompany] = useState('');
   const [singleUsage, setSingleUsage] = useState('');
-  const [singleLastActive, setSingleLastActive] = useState('');
   const [qualificationThreshold, setQualificationThreshold] = useState<number>(
     getStoredQualificationThreshold(),
   );
@@ -76,36 +74,27 @@ export function CsvUploader() {
     }
   };
 
-  const runAgentsQualification = async (inserted: any[]) => {
-    // Send to agents API for qualification
+  const runAgentsEnrichment = async (inserted: any[]) => {
     try {
-      const response = await fetch(`${AGENTS_API_BASE_URL}/qualify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pqls: inserted,
-          qualification_threshold: qualificationThreshold,
-        }),
-      });
-      if (response.ok) {
-        const results = await response.json();
-        // Update PQLs with qualification results
-        for (const result of results.qualified || []) {
-          await supabase
-            .from('pqls')
-            .update({
-              status: 'qualified',
-              qualification_result: result.qualification_result,
-              agent_metadata: result.agent_metadata,
-            })
-            .eq('id', result.id);
+      let processed = 0;
+      for (const pql of inserted) {
+        const response = await fetch(`${AGENTS_API_BASE_URL}/research?pql_id=${pql.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            qualification_threshold: qualificationThreshold,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Status ${response.status} while enriching ${pql.id}`);
         }
-        toast({ title: `${results.qualified?.length ?? 0} PQLs qualified` });
+        processed += 1;
       }
+      toast({ title: `${processed} PQLs enriched` });
     } catch {
       toast({
         title: 'Agents API not reachable',
-        description: 'PQLs saved but not yet qualified. Start your local API to process them.',
+        description: 'PQLs saved but not yet enriched. Start your local API to process them.',
         variant: 'destructive',
       });
     }
@@ -161,7 +150,7 @@ export function CsvUploader() {
       });
 
       const inserted = await insertPqls.mutateAsync(pqlRows);
-      await runAgentsQualification(inserted);
+      await runAgentsEnrichment(inserted);
 
       setRows([]);
       setHeaders([]);
@@ -172,10 +161,10 @@ export function CsvUploader() {
   };
 
   const handleSingleTestSubmit = async () => {
-    if (!singleEmail || !singleUsage || !singleLastActive) {
+    if (!singleEmail || !singleUsage) {
       toast({
         title: 'Missing fields',
-        description: 'Email, Usage Score, and Last Active are required for a test PQL.',
+        description: 'Email and Usage Score are required for a test PQL.',
         variant: 'destructive',
       });
       return;
@@ -188,7 +177,6 @@ export function CsvUploader() {
         Email: singleEmail,
         'Company Name': singleCompany,
         'Usage Score (1-10)': singleUsage,
-        'Last Active': singleLastActive,
       };
 
       const pqlRows = [
@@ -196,7 +184,6 @@ export function CsvUploader() {
           email: singleEmail,
           company_name: singleCompany || null,
           product_usage_score: Number(singleUsage) || null,
-          // Keep unstructured "Last Active" only in raw_data; qualification agent interprets it.
           last_active_date: null,
           raw_data: rawRow as any,
           status: 'pending' as const,
@@ -204,13 +191,12 @@ export function CsvUploader() {
       ];
 
       const inserted = await insertPqls.mutateAsync(pqlRows as any);
-      await runAgentsQualification(inserted);
+      await runAgentsEnrichment(inserted);
 
       setSingleId('');
       setSingleEmail('');
       setSingleCompany('');
       setSingleUsage('');
-      setSingleLastActive('');
     } finally {
       setProcessing(false);
     }
@@ -291,14 +277,6 @@ export function CsvUploader() {
                 value={singleUsage}
                 onChange={(e) => setSingleUsage(e.target.value)}
                 placeholder="8"
-              />
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <Label className="text-xs">Last Active</Label>
-              <Input
-                value={singleLastActive}
-                onChange={(e) => setSingleLastActive(e.target.value)}
-                placeholder="e.g. 2 hours ago, 1 day ago"
               />
             </div>
           </div>

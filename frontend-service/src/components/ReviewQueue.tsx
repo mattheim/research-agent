@@ -1,7 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StatusBadge } from '@/components/StatusBadge';
 import { usePqls } from '@/hooks/use-pqls';
-import { format } from 'date-fns';
 
 interface ReviewQueueProps {
   onSelect: (id: string) => void;
@@ -23,17 +21,15 @@ export function ReviewQueue({ onSelect, selectedId, statusFilter }: ReviewQueueP
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
+            <TableHead>Name</TableHead>
             <TableHead>Company</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Score</TableHead>
-            <TableHead>Last Active</TableHead>
-            <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(!filtered || filtered.length === 0) ? (
+          {!filtered || filtered.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                 No PQLs found. Upload a CSV to get started.
               </TableCell>
             </TableRow>
@@ -46,6 +42,27 @@ export function ReviewQueue({ onSelect, selectedId, statusFilter }: ReviewQueueP
               >
                 {(() => {
                   const raw = (pql.raw_data || {}) as Record<string, any>;
+                  const firstName =
+                    raw.first_name ||
+                    raw.firstName ||
+                    raw['First Name'] ||
+                    raw['first name'] ||
+                    '';
+                  const lastName =
+                    raw.last_name ||
+                    raw.lastName ||
+                    raw['Last Name'] ||
+                    raw['last name'] ||
+                    '';
+                  const combinedName = `${String(firstName).trim()} ${String(lastName).trim()}`.trim();
+                  const nameDisplay =
+                    raw.name ||
+                    raw.Name ||
+                    raw.full_name ||
+                    raw.fullName ||
+                    raw['Full Name'] ||
+                    combinedName ||
+                    '—';
                   const companyDisplay =
                     pql.company_name ||
                     raw['Company Name'] ||
@@ -54,23 +71,12 @@ export function ReviewQueue({ onSelect, selectedId, statusFilter }: ReviewQueueP
                     raw.company_name ||
                     raw.company ||
                     '—';
-                  const lastActiveRaw =
-                    raw['Last Active'] ??
-                    raw.last_active ??
-                    raw.last_active_date ??
-                    null;
-                  const lastActiveDisplay =
-                    lastActiveRaw ??
-                    (pql.last_active_date
-                      ? format(new Date(pql.last_active_date), 'MMM d, yyyy')
-                      : '—');
+
                   return (
                     <>
+                      <TableCell className="font-medium">{String(nameDisplay)}</TableCell>
                       <TableCell className="font-medium">{companyDisplay}</TableCell>
                       <TableCell className="text-muted-foreground">{pql.email}</TableCell>
-                      <TableCell>{pql.product_usage_score ?? '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{lastActiveDisplay}</TableCell>
-                      <TableCell><StatusBadge status={pql.status} /></TableCell>
                     </>
                   );
                 })()}

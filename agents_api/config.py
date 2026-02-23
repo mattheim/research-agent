@@ -17,11 +17,10 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 
-# Simple, overridable threshold for intent scoring
-try:
-    QUALIFICATION_INTENT_THRESHOLD = int(os.getenv("QUALIFICATION_INTENT_THRESHOLD", "70"))
-except ValueError:
-    QUALIFICATION_INTENT_THRESHOLD = 70
+# Optional: official Google Programmable Search API credentials.
+# If set, web_navigate will use this first for reliable Google results.
+GOOGLE_SEARCH_API_KEY = os.getenv("GOOGLE_SEARCH_API_KEY") or ""
+GOOGLE_SEARCH_CX = os.getenv("GOOGLE_SEARCH_CX") or ""
 
 
 def ensure_supabase_config() -> None:

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { PipelineOverview } from '@/components/PipelineOverview';
 import { ReviewQueue } from '@/components/ReviewQueue';
 import { PqlDetailPanel } from '@/components/PqlDetailPanel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,14 +11,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold">Pipeline Overview</h1>
-        <p className="text-sm text-muted-foreground">Monitor and manage your PQL pipeline</p>
+        <h1 className="text-2xl font-bold">Overview</h1>
+        <p className="text-sm text-muted-foreground">Monitor</p>
       </div>
 
-      <PipelineOverview />
-
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Review Queue</h2>
+        <h2 className="text-lg font-semibold">Queue</h2>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
@@ -33,7 +30,6 @@ export default function Dashboard() {
         </Select>
       </div>
 
-      {/* Layout: ~40% list on the left, ~60% detail on the right */}
       <div className="grid gap-6 lg:grid-cols-[40%_60%]">
         <ReviewQueue
           onSelect={setSelectedPql}
