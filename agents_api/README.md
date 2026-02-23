@@ -1,6 +1,6 @@
 # PQL Agents API
 
-FastAPI-based backend service that powers the PQL → Meeting pipeline for the `pql-pipeline-pilot` Lovable app.  
+FastAPI-based backend service that powers the PQL → Meeting pipeline for the `frontend-service` Lovable app.  
 It qualifies incoming PQLs, enriches them, drafts outreach emails, and updates Supabase.
 
 ## Features
@@ -44,5 +44,4 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 uvicorn agents_api.main:app --reload --port 8000
 ```
 
-The frontend (`pql-pipeline-pilot`) should point `AGENTS_API_BASE_URL` to `http://localhost:8000`.
-
+The frontend (`frontend-service`) should point `AGENTS_API_BASE_URL` to `http://localhost:8000`.
